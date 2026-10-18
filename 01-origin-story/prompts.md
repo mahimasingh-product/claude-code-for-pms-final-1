@@ -27,5 +27,3 @@ I just joined Rook Industries as PM for Rook Dispatch. Read everything in 00-roo
 
 ### 2.
 What's contradictory or missing, not just in the company documents, but across everything in 00-rook?
-
-### 3.
