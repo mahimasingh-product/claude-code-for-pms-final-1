@@ -127,3 +127,6 @@ Important notes from today for next session:
 - Quiet-responder re-entry must be triggered by repeated regional callouts while someone is marked available but receives no offer; missed-callout thresholds alone cannot catch someone routing no longer reaches.
 - The proposed check-in is separate from callout routing. It lets the responder confirm availability and alert readiness, pause, or report alert trouble; silence is not a decline, and confirmation restores the neutral baseline rather than boosting priority.
 - `05-super-speed/prototype-reentry.html` is a simulated click-through of Kip's coverage view and Meteor Mite's check-in, not a production delivery implementation.
+- `.claude/skills/meeting-recap/SKILL.md` extracts only explicit meeting decisions and follow-ups, recording owners and due dates when stated; it marks missing details instead of inferring them.
+- `.claude/skills/review-checklist/SKILL.md` already exists and assesses only owner, success measure, consistent scope, and problem-before-fix; it does not edit briefs.
+- No recurring Monday review schedule is configured. `06-sidekicks/scheduled-run-output.txt` is output from a past run, not an active schedule; do not claim weekly automation is running.
