@@ -27,3 +27,24 @@ I just joined Rook Industries as PM for Rook Dispatch. Read everything in 00-roo
 
 ### 2.
 What's contradictory or missing, not just in the company documents, but across everything in 00-rook?
+
+### 3.
+Do we have data for how many respondres are actually respondind to the alerts and then acting on them?
+
+### 4.
+Yes can you please do that
+
+### 5.
+Before we wrap up, two things. First: look back through this session and find the prompts I wrote myself, not the starter I pasted. Save them into 01-origin-story/prompts.md, one per numbered slot, exactly as I typed them. Don't tidy them up. Second: add a few lines to the Working context in CLAUDE.md, anything we figured out today that isn't in there yet and that I'd want you to already know next session.
+
+### 6.
+Can you suggest ways to fix the responder alert problem?
+
+### 7.
+yes convert this into a PM memo
+
+### 8.
+Before we wrap up: commit everything that's changed with a short message describing what this session did, then push. Tell me when it's done and give me the link to my repository on GitHub.
+
+### 9.
+what are all my prompts from this session not been saved in prompts.md
