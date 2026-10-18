@@ -111,3 +111,6 @@ Important notes from today for next session:
 - There is no single canonical written explanation for how routing priority is calculated; Wen owns that knowledge in practice. That is a real documentation gap and a PM risk.
 - Small UI noise is not harmless here: console filter persistence is already generating tickets and could become a recurring support drain.
 - The real decision is not “revert 4.2” in the abstract; it is whether the product tradeoff is still justified after we separate routing change, timing change, and seasonal effects.
+- The data we do have shows a measurable drop in ping take-rate after 4.2: roughly 73.5% before release versus 68.5% after, with August at 67.4% versus ~76% in June and July. That is a real product signal, but it is still a response metric, not proof of operational completion.
+- The repo does not yet distinguish between three different failure modes: routing that picks the wrong people, timeout that expires too fast, and push-delivery issues that prevent the phone from alerting at all. Until we separate those, we do not have a clean root-cause story.
+- We should not treat “nobody answered” as the same thing as “the alert was there and the responder ignored it.” The dataset and the ticket themes are pointing at different mechanisms, and only a proper funnel analysis will tell us which is dominant.
