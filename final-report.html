@@ -1,0 +1,639 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#183a31">
+  <title>Dispatch 4.2 | What changed, what we learned</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1b2923;
+      --muted: #63716a;
+      --paper: #f2f1e9;
+      --white: #fffefa;
+      --green: #183a31;
+      --green-2: #315d4b;
+      --mint: #dce9dc;
+      --red: #c9543e;
+      --red-soft: #f7e7df;
+      --gold: #e4c24f;
+      --gold-soft: #faf1d4;
+      --blue: #35637b;
+      --blue-soft: #e6eef1;
+      --line: #d8ddd5;
+      --display: Georgia, "Times New Roman", serif;
+      --body: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+      --shadow: 0 18px 48px rgba(25, 48, 37, .08);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--paper);
+      color: var(--ink);
+      font-family: var(--body);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    button, a { font: inherit; }
+    button { cursor: pointer; }
+    a { color: inherit; }
+    .bar {
+      position: sticky;
+      z-index: 10;
+      top: 0;
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      min-height: 62px;
+      padding: 0 clamp(16px, 4vw, 58px);
+      color: #f4f2e8;
+      background: var(--green);
+      border-bottom: 1px solid rgba(255,255,255,.13);
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      flex: 0 0 auto;
+      font-size: 11px;
+      font-weight: 850;
+      letter-spacing: .08em;
+    }
+    .brand-mark {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border-radius: 3px;
+      color: var(--green);
+      background: var(--gold);
+      font-family: var(--display);
+      font-size: 18px;
+    }
+    .brand-sub { color: #aab8ad; font-weight: 650; }
+    .nav {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      min-width: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .nav::-webkit-scrollbar { display: none; }
+    .nav button {
+      min-height: 34px;
+      padding: 6px 10px;
+      border: 0;
+      border-radius: 3px;
+      color: #c0cbc0;
+      background: transparent;
+      white-space: nowrap;
+      font-size: 11px;
+      font-weight: 750;
+    }
+    .nav button:hover, .nav button[aria-current="true"] { color: #fff; background: #315548; }
+    .bar-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      color: #c3cec4;
+      white-space: nowrap;
+      font-size: 10px;
+      font-weight: 750;
+      text-transform: uppercase;
+    }
+    .bar-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--gold); }
+    main { width: min(1320px, 100%); margin: 0 auto; padding: 28px clamp(16px, 4vw, 58px) 24px; }
+    .slide { display: none; min-height: min(780px, calc(100vh - 142px)); animation: enter .25s ease-out; }
+    .slide.active { display: block; }
+    @keyframes enter { from { opacity: .45; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .slide-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .kicker { margin: 0; color: var(--green-2); font-size: 10px; font-weight: 850; letter-spacing: .13em; text-transform: uppercase; }
+    .slide-number { color: #8a958d; font-size: 11px; font-weight: 800; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1, h2 { font-family: var(--display); font-weight: 500; letter-spacing: 0; }
+    h1 { max-width: 900px; margin-bottom: 18px; font-size: clamp(42px, 6vw, 76px); line-height: .99; }
+    h2 { margin-bottom: 10px; font-size: clamp(32px, 4vw, 48px); line-height: 1.05; }
+    h3 { margin-bottom: 8px; font-size: 16px; line-height: 1.2; }
+    .lede { max-width: 790px; margin-bottom: 26px; color: #45544b; font-size: clamp(16px, 2vw, 20px); line-height: 1.48; }
+    .source-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; color: #6d7971; font-size: 10px; }
+    .source-row a { text-decoration-thickness: 1px; text-underline-offset: 3px; }
+    .source-row a:hover { color: var(--red); }
+    .panel { border: 1px solid var(--line); border-radius: 5px; background: var(--white); box-shadow: var(--shadow); }
+    .hero {
+      position: relative;
+      min-height: 620px;
+      overflow: hidden;
+      padding: clamp(24px, 5vw, 58px);
+      color: #f4f2e8;
+      background: var(--green);
+      border-radius: 6px;
+      box-shadow: var(--shadow);
+    }
+    .hero::before {
+      position: absolute;
+      inset: 0 0 auto auto;
+      width: 48%;
+      height: 100%;
+      content: "";
+      opacity: .19;
+      background-image: linear-gradient(90deg, transparent 49.6%, #9eb2a1 49.8%, #9eb2a1 50.2%, transparent 50.4%), linear-gradient(0deg, transparent 49.6%, #9eb2a1 49.8%, #9eb2a1 50.2%, transparent 50.4%);
+      background-size: 66px 66px;
+      mask-image: linear-gradient(90deg, transparent, #000 85%);
+      pointer-events: none;
+    }
+    .hero-inner { position: relative; z-index: 1; max-width: 920px; }
+    .hero .kicker { color: var(--gold); }
+    .hero h1 { max-width: 800px; margin-top: 19px; }
+    .hero .lede { max-width: 700px; margin-bottom: 33px; color: #cfdbd0; }
+    .hero-callout { display: flex; align-items: start; gap: 12px; max-width: 670px; padding: 14px 16px; border-left: 3px solid var(--gold); background: rgba(255,255,255,.07); color: #edf0e7; font-size: 13px; }
+    .hero-callout strong { color: var(--gold); }
+    .hero-bottom { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 38px; }
+    .hero-stat { min-width: 145px; padding: 12px 15px; border: 1px solid rgba(255,255,255,.18); background: rgba(10,28,22,.2); }
+    .hero-stat small { display: block; color: #bdcbbf; font-size: 9px; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
+    .hero-stat strong { display: block; margin-top: 2px; color: #fff; font-family: var(--display); font-size: 28px; font-weight: 500; }
+    .hero-stat em { color: var(--gold); font-family: var(--body); font-size: 11px; font-style: normal; }
+
+    .two-col { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(280px, .75fr); gap: 20px; align-items: stretch; }
+    .metric-panel { padding: 20px 22px; }
+    .chart-title { display: flex; align-items: start; justify-content: space-between; gap: 15px; margin-bottom: 18px; }
+    .chart-title p { margin: 0; color: var(--muted); font-size: 11px; }
+    .basis { padding: 5px 8px; border-radius: 3px; color: var(--blue); background: var(--blue-soft); font-size: 9px; font-weight: 850; white-space: nowrap; text-transform: uppercase; }
+    .rate-row { display: grid; grid-template-columns: 115px 1fr 58px; align-items: center; gap: 12px; margin: 15px 0; }
+    .rate-name { color: #55645a; font-size: 11px; font-weight: 750; }
+    .rate-track { height: 17px; overflow: hidden; background: #e9ece6; }
+    .rate-fill { height: 100%; width: var(--rate); background: var(--green-2); }
+    .rate-row.transition .rate-fill { background: var(--red); }
+    .rate-number { text-align: right; font-size: 14px; font-weight: 850; font-variant-numeric: tabular-nums; }
+    .metric-foot { margin: 19px 0 0; padding-top: 13px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; }
+    .side-note { display: flex; flex-direction: column; justify-content: space-between; padding: 21px; color: #f6f3e9; background: var(--blue); }
+    .side-note .label { color: #d5e1e4; font-size: 9px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+    .side-note strong { display: block; margin: 11px 0; font-family: var(--display); font-size: 33px; font-weight: 500; line-height: 1.05; }
+    .side-note p { margin: 0; color: #d7e0df; font-size: 12px; }
+    .side-note .rule { margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.25); color: #f0e8c4; font-size: 11px; }
+    .evidence-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 17px; }
+    .evidence { min-height: 112px; padding: 15px; border: 1px solid var(--line); background: #fbfbf7; }
+    .evidence .big { display: block; margin-bottom: 6px; color: var(--red); font-family: var(--display); font-size: 30px; line-height: 1; }
+    .evidence p { margin: 0; color: #58665d; font-size: 11px; }
+
+    .weights { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 22px 0; }
+    .weight-card { padding: 18px; border: 1px solid var(--line); background: var(--white); }
+    .weight-card h3 { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .weight-card h3 span { color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .weight-compare { display: flex; align-items: center; gap: 12px; margin-top: 17px; }
+    .weight-old, .weight-new { flex: 1; padding: 11px 12px; background: #f1f2ed; }
+    .weight-new.hot { color: #fff; background: var(--red); }
+    .weight-new.cool { color: #fff; background: var(--green-2); }
+    .weight-compare small { display: block; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+    .weight-compare strong { display: block; margin-top: 2px; font-family: var(--display); font-size: 28px; font-weight: 500; }
+    .weight-arrow { color: #909a92; font-size: 20px; }
+    .timeout-band { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px; padding: 18px 21px; color: #fff; background: var(--red); }
+    .timeout-band .time { font-family: var(--display); font-size: 35px; line-height: 1; }
+    .timeout-band small { display: block; margin-top: 5px; color: #ffe6dd; font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .timeout-arrow { color: #f4c2b6; font-size: 22px; }
+    .release-note { margin: 14px 0 0; color: var(--muted); font-size: 11px; }
+
+    .split-evidence { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-top: 20px; }
+    .evidence-box { padding: 20px; }
+    .evidence-box h3 { font-family: var(--display); font-size: 23px; font-weight: 500; }
+    .split-bar { display: flex; height: 24px; margin: 13px 0; overflow: hidden; color: white; font-size: 9px; font-weight: 850; }
+    .split-bar span { display: flex; align-items: center; justify-content: center; }
+    .split-bar .handlers { width: 60%; background: var(--green-2); }
+    .split-bar .responders { width: 40%; background: var(--red); }
+    .theme-lines { display: grid; gap: 9px; margin-top: 14px; }
+    .theme-line { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--line); font-size: 11px; }
+    .theme-line strong { color: var(--green); }
+    .caveat { display: flex; gap: 12px; margin-top: 16px; padding: 14px 16px; border-left: 3px solid var(--gold); background: var(--gold-soft); color: #5f512b; font-size: 11px; }
+    .caveat strong { white-space: nowrap; }
+
+    .distribution { display: grid; grid-template-columns: .7fr 1.3fr; gap: 19px; margin-top: 20px; }
+    .count-card { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .count-stat { padding: 19px; color: white; background: var(--red); }
+    .count-stat.positive { background: var(--green-2); }
+    .count-stat b { display: block; font-family: var(--display); font-size: 48px; font-weight: 500; line-height: 1; }
+    .count-stat span { display: block; margin-top: 7px; color: rgba(255,255,255,.84); font-size: 10px; }
+    .responder-bars { padding: 18px 21px; }
+    .responder-bars h3 { margin-bottom: 5px; }
+    .responder-bars .caption { margin-bottom: 14px; color: var(--muted); font-size: 10px; }
+    .compare-row { display: grid; grid-template-columns: 110px 1fr 95px; align-items: center; gap: 10px; margin: 10px 0; font-size: 10px; }
+    .compare-label { font-weight: 800; }
+    .bar-pair { display: grid; gap: 3px; }
+    .bar-mini { width: var(--w); min-width: 3px; height: 8px; background: #9eaaa1; }
+    .bar-mini.after { background: var(--red); }
+    .compare-values { text-align: right; color: #59665e; font-variant-numeric: tabular-nums; }
+    .legend { display: flex; gap: 13px; margin-top: 13px; color: var(--muted); font-size: 9px; }
+    .legend i { display: inline-block; width: 8px; height: 8px; margin-right: 4px; background: #9eaaa1; }
+    .legend .after-key { background: var(--red); }
+    .caution-card { margin-top: 15px; padding: 13px 15px; color: #48574d; background: #e7eee5; font-size: 11px; }
+
+    .loop { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 22px 0 18px; }
+    .loop-step { position: relative; min-height: 145px; padding: 15px 14px; border: 1px solid var(--line); background: var(--white); }
+    .loop-step:not(:last-child)::after { position: absolute; top: 46px; right: -12px; z-index: 1; content: "→"; color: var(--red); font-size: 20px; font-weight: 800; }
+    .step-index { display: grid; width: 24px; height: 24px; place-items: center; margin-bottom: 12px; color: #fff; background: var(--green-2); border-radius: 50%; font-size: 10px; font-weight: 850; }
+    .loop-step:nth-child(4) .step-index, .loop-step:nth-child(5) .step-index { background: var(--red); }
+    .loop-step h3 { margin-bottom: 6px; font-size: 12px; }
+    .loop-step p { margin: 0; color: var(--muted); font-size: 10px; }
+    .code-values { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .code-value { padding: 12px; background: #e7ece6; }
+    .code-value b { display: block; color: var(--green); font-family: var(--display); font-size: 24px; font-weight: 500; }
+    .code-value span { color: #59675e; font-size: 9px; }
+    .implementation-warning { margin-top: 14px; padding: 12px 14px; border: 1px dashed #bb806f; color: #764b40; background: #fbf0eb; font-size: 10px; }
+
+    .module-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 11px; margin-top: 19px; }
+    .module-card { display: flex; flex-direction: column; min-height: 207px; padding: 14px; border: 1px solid var(--line); background: var(--white); }
+    .module-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+    .module-id { color: var(--red); font-size: 9px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+    .module-name { color: var(--muted); font-size: 9px; font-weight: 750; text-transform: uppercase; }
+    .module-card h3 { margin-bottom: 7px; font-family: var(--display); font-size: 19px; font-weight: 500; }
+    .module-finding { margin: 0 0 10px; color: #516057; font-size: 10px; line-height: 1.4; }
+    .module-link { margin-top: auto; color: var(--green-2); font-size: 9px; font-weight: 800; text-underline-offset: 3px; }
+    details.prompt { margin-top: 10px; border-top: 1px solid #e6e9e3; padding-top: 8px; }
+    details.prompt summary { color: var(--red); cursor: pointer; font-size: 9px; font-weight: 850; }
+    details.prompt blockquote { margin: 8px 0 2px; padding-left: 9px; border-left: 2px solid var(--gold); color: #4c5a51; font-family: var(--body); font-size: 9px; line-height: 1.45; }
+    .dual-prompt { margin-top: 8px; }
+    .prompt-disclaimer { margin: 11px 0 0; color: var(--muted); font-size: 9px; }
+
+    .fix-layout { display: grid; grid-template-columns: minmax(260px, .78fr) minmax(0, 1.22fr); gap: 16px; align-items: stretch; margin-top: 19px; }
+    .handler-view { padding: 19px; color: #f6f2e9; background: var(--green); }
+    .mini-eyebrow { color: var(--gold); font-size: 9px; font-weight: 850; letter-spacing: .12em; text-transform: uppercase; }
+    .handler-view h3 { margin: 6px 0 2px; font-family: var(--display); font-size: 25px; font-weight: 500; }
+    .handler-view .muted-invert { color: #bdcbbf; font-size: 10px; }
+    .mite-card { margin-top: 18px; padding: 14px; color: var(--ink); background: var(--white); }
+    .mite-top { display: flex; justify-content: space-between; align-items: start; gap: 10px; }
+    .mite-name { font-weight: 850; font-size: 13px; }
+    .mite-handler { color: var(--muted); font-size: 9px; }
+    .state-chip { padding: 4px 7px; color: #7b5500; background: var(--gold-soft); font-size: 8px; font-weight: 850; text-transform: uppercase; }
+    .mite-reason { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-top: 13px; padding-top: 11px; border-top: 1px solid var(--line); }
+    .mite-reason small { display: block; color: var(--muted); font-size: 8px; text-transform: uppercase; }
+    .mite-reason strong { display: block; margin-top: 2px; font-size: 10px; }
+    .handler-explainer { margin: 13px 0 0; color: #e0e8df; font-size: 10px; }
+    .phone-view { overflow: hidden; border: 1px solid var(--line); background: var(--white); }
+    .phone-view-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 15px; border-bottom: 1px solid var(--line); }
+    .phone-view-head strong { font-size: 11px; }
+    .phone-view-head span { color: var(--muted); font-size: 9px; }
+    .phone-body { padding: 18px; }
+    .phone-body .prompt-title { margin: 3px 0 7px; font-family: var(--display); font-size: 23px; font-weight: 500; }
+    .phone-body .prompt-copy { margin-bottom: 13px; color: #59665d; font-size: 10px; }
+    .choices { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+    .choice {
+      min-height: 57px;
+      padding: 8px;
+      border: 1px solid #cbd7cd;
+      border-radius: 3px;
+      color: var(--ink);
+      background: #fff;
+      text-align: left;
+      font-size: 9px;
+      font-weight: 800;
+    }
+    .choice:hover, .choice[aria-pressed="true"] { border-color: var(--green-2); background: var(--mint); }
+    .choice:first-child { color: white; background: var(--green-2); border-color: var(--green-2); }
+    .choice:first-child:hover, .choice:first-child[aria-pressed="true"] { background: var(--green); }
+    .choice:last-child { border-color: #e1c976; background: #fff9e8; }
+    .choice:last-child:hover, .choice:last-child[aria-pressed="true"] { background: var(--gold-soft); }
+    .phone-response { display: flex; align-items: start; gap: 8px; margin-top: 12px; padding: 10px; color: #45534a; background: #f0f3ed; font-size: 9px; }
+    .phone-response strong { color: var(--green); }
+    .prototype-caption { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; color: var(--muted); font-size: 9px; }
+    .prototype-caption a { color: var(--green-2); font-weight: 850; text-underline-offset: 3px; }
+
+    .guardrails { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 20px 0 16px; }
+    .guardrail { padding: 18px; border-top: 4px solid var(--green-2); background: var(--white); }
+    .guardrail.recap { border-color: var(--red); }
+    .guardrail h3 { font-family: var(--display); font-size: 23px; font-weight: 500; }
+    .guardrail p { margin-bottom: 11px; color: #56645b; font-size: 11px; }
+    .guardrail ul { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+    .guardrail li { display: flex; gap: 8px; color: #405046; font-size: 10px; }
+    .guardrail li::before { content: "→"; color: var(--red); font-weight: 900; }
+    .brief-check { overflow: hidden; border: 1px solid var(--line); background: #fbfbf7; }
+    .brief-check-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 15px; border-bottom: 1px solid var(--line); }
+    .brief-check-head strong { font-size: 11px; }
+    .brief-check-head span { color: var(--muted); font-size: 9px; }
+    .check-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .check { padding: 12px; border-right: 1px solid var(--line); }
+    .check:last-child { border: 0; }
+    .check-label { display: block; color: var(--muted); font-size: 8px; font-weight: 800; text-transform: uppercase; }
+    .check-result { display: block; margin: 5px 0; font-size: 10px; font-weight: 850; }
+    .check-result.warn { color: #9a5c00; }
+    .check-result.pass { color: var(--green-2); }
+    .check p { margin: 0; color: #68756d; font-size: 8px; line-height: 1.4; }
+    .scheduler-note { margin-top: 12px; color: #765747; font-size: 9px; }
+
+    .controls {
+      position: sticky;
+      z-index: 8;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 58px;
+      padding: 8px clamp(16px, 4vw, 58px);
+      background: rgba(242,241,233,.96);
+      border-top: 1px solid #daddd6;
+      backdrop-filter: blur(8px);
+    }
+    .control-button { min-width: 75px; padding: 8px 11px; border: 1px solid #bdc9bf; border-radius: 3px; color: var(--green); background: transparent; font-size: 10px; font-weight: 850; }
+    .control-button:hover:not(:disabled) { color: white; background: var(--green); border-color: var(--green); }
+    .control-button:disabled { opacity: .4; cursor: default; }
+    .progress-wrap { flex: 1; display: flex; align-items: center; gap: 10px; }
+    .progress-track { flex: 1; height: 4px; background: #d7ddd5; }
+    .progress-fill { width: 14.2857%; height: 100%; background: var(--red); transition: width .2s ease; }
+    .progress-label { min-width: 45px; color: var(--muted); text-align: right; font-size: 9px; font-weight: 800; font-variant-numeric: tabular-nums; }
+    .print-button { margin-left: auto; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+    @media (max-width: 900px) {
+      .two-col, .distribution { grid-template-columns: 1fr; }
+      .side-note { min-height: 200px; }
+      .module-grid { grid-template-columns: repeat(2, 1fr); }
+      .loop { grid-template-columns: repeat(3, 1fr); }
+      .loop-step:not(:last-child)::after { content: ""; }
+    }
+    @media (max-width: 640px) {
+      .bar { gap: 10px; padding: 0 12px; }
+      .brand { gap: 6px; font-size: 9px; }
+      .brand-mark { width: 25px; height: 25px; }
+      .nav { flex: 1; }
+      .nav button { padding: 5px 7px; font-size: 9px; }
+      .bar-meta { display: none; }
+      main { padding: 18px 12px 18px; }
+      .slide { min-height: calc(100vh - 126px); }
+      .hero { min-height: 620px; padding: 27px 20px; }
+      .hero::before { width: 100%; opacity: .11; }
+      h1 { font-size: 45px; }
+      h2 { font-size: 35px; }
+      .hero-bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+      .hero-stat { min-width: 0; }
+      .hero-stat strong { font-size: 23px; }
+      .rate-row { grid-template-columns: 85px 1fr 50px; gap: 7px; }
+      .evidence-grid, .weights, .split-evidence, .guardrails { grid-template-columns: 1fr; }
+      .evidence { min-height: 0; }
+      .weight-card { padding: 14px; }
+      .timeout-band { gap: 9px; padding: 15px; }
+      .timeout-band .time { font-size: 29px; }
+      .caveat { display: block; }
+      .caveat strong { display: block; margin-bottom: 4px; }
+      .count-card { grid-template-columns: 1fr 1fr; }
+      .count-stat { padding: 14px; }
+      .count-stat b { font-size: 39px; }
+      .compare-row { grid-template-columns: 86px 1fr 82px; gap: 6px; }
+      .loop { grid-template-columns: 1fr; }
+      .loop-step { min-height: 0; }
+      .code-values { grid-template-columns: 1fr 1fr; }
+      .module-grid { grid-template-columns: 1fr; }
+      .module-card { min-height: 0; }
+      .fix-layout { grid-template-columns: 1fr; }
+      .choices { grid-template-columns: 1fr; }
+      .choice { min-height: 40px; }
+      .check-grid { grid-template-columns: 1fr 1fr; }
+      .check:nth-child(2) { border-right: 0; }
+      .check:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .controls { gap: 7px; padding: 7px 10px; }
+      .control-button { min-width: 59px; padding: 7px; font-size: 9px; }
+      .progress-label { min-width: 39px; font-size: 8px; }
+      .print-button { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+    @media print {
+      body { background: white; }
+      .bar, .controls { display: none !important; }
+      main { width: 100%; padding: 0; }
+      .slide, .slide.active { display: block !important; min-height: 0; page-break-after: always; padding: 20px; }
+      .hero { min-height: 0; box-shadow: none; }
+      details.prompt:not([open]) > :not(summary) { display: block; }
+      .panel { box-shadow: none; }
+      .prototype-caption a::after { content: " (" attr(href) ")"; }
+    }
+  </style>
+</head>
+<body>
+  <header class="bar">
+    <div class="brand"><span class="brand-mark">R</span><span>ROOK</span><span class="brand-sub">/ PRODUCT READOUT</span></div>
+    <nav class="nav" aria-label="Presentation sections">
+      <button type="button" data-go="0" aria-current="true">Readout</button>
+      <button type="button" data-go="1">Evidence</button>
+      <button type="button" data-go="2">Distribution</button>
+      <button type="button" data-go="3">Routing</button>
+      <button type="button" data-go="4">Six modules</button>
+      <button type="button" data-go="5">Re-entry</button>
+      <button type="button" data-go="6">Guardrails</button>
+    </nav>
+    <div class="bar-meta"><span class="bar-dot"></span><span>Dispatch · 4.2</span></div>
+  </header>
+
+  <main>
+    <section class="slide active" aria-label="Release 4.2 readout">
+      <div class="hero">
+        <div class="hero-inner">
+          <p class="kicker">Dispatch · Release readout · 18 October 2026</p>
+          <h1>4.2 changed who got asked — and how long they had to answer.</h1>
+          <p class="lede">Acceptance fell after both changes shipped together. The evidence supports a real responder experience problem, but it cannot tell us which change caused which part.</p>
+          <div class="hero-callout"><span><strong>Plainly:</strong> the timeout got shorter while the ranking shifted toward proximity. Some responders got many more offers; others got far fewer. A decline or timeout can lower a score that never recovers with time.</span></div>
+          <div class="hero-bottom" aria-label="Release facts">
+            <div class="hero-stat"><small>Weighted take rate</small><strong>76.8% <em>→</em> 68.5%</strong><em>complete weeks · −8.3 points</em></div>
+            <div class="hero-stat"><small>Offer window</small><strong>90s <em>→</em> 60s</strong><em>less time to notice and act</em></div>
+            <div class="hero-stat"><small>Routing</small><strong>0.45 <em>→</em> 0.60</strong><em>proximity weight increased</em></div>
+          </div>
+        </div>
+      </div>
+      <div class="source-row"><span>Sources:</span><a href="00-rook/data/callout-history-analysis.xlsx">callout analysis workbook</a><a href="00-rook/code/dispatch-routing/config.py">routing config</a><a href="00-rook/company/notes/dispatch-slack-thread.txt">team thread</a></div>
+    </section>
+
+    <section class="slide" aria-label="Evidence and limits">
+      <div class="slide-top"><p class="kicker">01 · The signal</p><span class="slide-number">02 / 07</span></div>
+      <h2>The signal is real.<br>The story is mixed.</h2>
+      <p class="lede">The full weeks after 4.2 have a lower take rate. The week that contains release day is a sharp dip, but it is not a clean before/after week.</p>
+      <div class="two-col">
+        <div class="panel metric-panel">
+          <div class="chart-title"><div><h3>Offers accepted ÷ offers sent</h3><p>Weighted from period totals; transition week shown separately.</p></div><span class="basis">Complete weeks</span></div>
+          <div class="rate-row"><span class="rate-name">Before · 6 weeks</span><div class="rate-track"><div class="rate-fill" style="--rate:76.8%"></div></div><span class="rate-number">76.8%</span></div>
+          <div class="rate-row transition"><span class="rate-name">Transition · Aug 10</span><div class="rate-track"><div class="rate-fill" style="--rate:54.2%"></div></div><span class="rate-number">54.2%</span></div>
+          <div class="rate-row"><span class="rate-name">After · 3 weeks</span><div class="rate-track"><div class="rate-fill" style="--rate:68.5%"></div></div><span class="rate-number">68.5%</span></div>
+          <p class="metric-foot">Before: 794 of 1,034 accepted. After: 332 of 485 accepted. The 10 August week straddles 12 August and is excluded from the complete-week comparison.</p>
+        </div>
+        <aside class="side-note"><div><span class="label">What support heard</span><strong>Two different moments of failure.</strong><p>On 26 August, Support described roughly two thirds of reports as “phone never goes off” and one third as “gone before I could answer.”</p></div><div class="rule">A timeout measures no answer. It does not prove an alert arrived, was seen, and was ignored.</div></aside>
+      </div>
+      <div class="evidence-grid">
+        <div class="evidence"><span class="big">25</span><p>Dispatch tickets in this set, all dated after 12 August; 15 filed by handlers, 10 by responders.</p></div>
+        <div class="evidence"><span class="big">4 / 4</span><p>Interview participants were handlers. Their experience is useful, but it is not a responder sample.</p></div>
+        <div class="evidence"><span class="big">Aug 31</span><p>Last week in the callout file. There is no prior-year August here to test the seasonal explanation.</p></div>
+      </div>
+      <div class="caveat"><strong>Data check</strong><span>The carry-forward note in <a href="CLAUDE.md">CLAUDE.md</a> says “roughly 73.5%” before release. The workbook's complete-week totals give 76.8% (794/1,034). This report uses the workbook totals; reconcile the older note before external use.</span></div>
+      <div class="source-row"><span>Sources:</span><a href="00-rook/data/callout-history-analysis.xlsx">period summary</a><a href="00-rook/feedback/interview-themes.md">interview themes</a><a href="00-rook/company/notes/dispatch-slack-thread.txt">support thread</a><a href="00-rook/feedback/tickets/">ticket folder</a></div>
+    </section>
+
+    <section class="slide" aria-label="Responder-level redistribution">
+      <div class="slide-top"><p class="kicker">02 · Under the average</p><span class="slide-number">03 / 07</span></div>
+      <h2>4.2 redistributed offers.<br>It did not affect everyone alike.</h2>
+      <p class="lede">Across complete weeks, most responders moved in one direction or the other. Mite’s record makes “the average” feel like a person instead of a percentage.</p>
+      <div class="distribution">
+        <div class="count-card">
+          <div class="count-stat"><b>6/16</b><span>averaged fewer pings sent and fewer taken</span></div>
+          <div class="count-stat positive"><b>10/16</b><span>averaged more pings sent and more taken</span></div>
+        </div>
+        <div class="panel responder-bars">
+          <h3>Meteor Mite · handler: Kip</h3>
+          <p class="caption">Average per week · 6 complete weeks before vs 3 complete weeks after</p>
+          <div class="compare-row"><span class="compare-label">Pings sent</span><div class="bar-pair"><span class="bar-mini" style="--w:56%"></span><span class="bar-mini after" style="--w:12%"></span></div><span class="compare-values">11.2 → 2.3</span></div>
+          <div class="compare-row"><span class="compare-label">Pings taken</span><div class="bar-pair"><span class="bar-mini" style="--w:38%"></span><span class="bar-mini after" style="--w:2%"></span></div><span class="compare-values">7.7 → 0.3</span></div>
+          <div class="legend"><span><i></i>Before</span><span><i class="after-key"></i>After</span></div>
+        </div>
+      </div>
+      <div class="caution-card"><strong>Interpretation boundary:</strong> this is consistent with routing redistribution, not proof of why Mite’s offers fell. Fewer offers are not the same as fewer jobs completed, and the short file cannot tell us whether August was normally quiet.</div>
+      <details class="prompt"><summary>Module 03 · exact prompt</summary><blockquote>Based on the data 6 respobders out of 16 received less pings and responded to less pings after the Aug 12 release and the rest got more pings and responded to more. Can you explain why this would happen based on the information you already have</blockquote></details>
+      <div class="source-row"><span>Source:</span><a href="00-rook/data/callout-history-analysis.xlsx">responder comparison</a><a href="CLAUDE.md">carry-forward analysis</a></div>
+    </section>
+
+    <section class="slide" aria-label="Routing behavior in code">
+      <div class="slide-top"><p class="kicker">03 · The mechanics</p><span class="slide-number">04 / 07</span></div>
+      <h2>The code has no automatic<br>way back into the queue.</h2>
+      <p class="lede">A responder is not removed for being quiet. But after declines or timeouts lower the acceptance score, the code never restores that score just because time passed.</p>
+      <div class="loop" aria-label="How an offer and score update work">
+        <div class="loop-step"><span class="step-index">1</span><h3>Available responders</h3><p>Everyone marked available stays in the ranking list.</p></div>
+        <div class="loop-step"><span class="step-index">2</span><h3>Ranking order</h3><p>Location, acceptance history, and capability decide who is asked first.</p></div>
+        <div class="loop-step"><span class="step-index">3</span><h3>60 seconds to answer</h3><p>Accept: stop. Decline or timeout: move to the next responder.</p></div>
+        <div class="loop-step"><span class="step-index">4</span><h3>Score changes</h3><p>Accept adds points. Decline and timeout both subtract points.</p></div>
+        <div class="loop-step"><span class="step-index">5</span><h3>No time recovery</h3><p>If ranking stops reaching someone, they cannot accept their way back.</p></div>
+      </div>
+      <div class="code-values">
+        <div class="code-value"><b>+0.08</b><span>per accepted callout</span></div>
+        <div class="code-value"><b>−0.12</b><span>per decline or timeout</span></div>
+        <div class="code-value"><b>0.60 / 0.25</b><span>proximity / recent acceptance weights in 4.2</span></div>
+        <div class="code-value"><b>0</b><span>automatic recovery over time</span></div>
+      </div>
+      <div class="implementation-warning"><strong>Important:</strong> the repository's phone push, answer polling, and availability lookup are placeholders; scores are in memory. This code explains the modeled loop, but cannot prove production alerts were delivered or production scores persisted.</div>
+      <details class="prompt"><summary>Module 04 · exact prompt</summary><blockquote>omebody has been quiet for a month. Walk me through, step by step, exactly what would have to happen for them to start getting work again.</blockquote></details>
+      <div class="source-row"><span>Sources:</span><a href="00-rook/code/dispatch-routing/config.py">config.py</a><a href="00-rook/code/dispatch-routing/history.py">history.py</a><a href="00-rook/code/dispatch-routing/routing.py">routing.py</a><a href="00-rook/code/dispatch-routing/offer.py">offer.py</a></div>
+    </section>
+
+    <section class="slide" aria-label="Six modules and their exact prompts">
+      <div class="slide-top"><p class="kicker">04 · The investigation trail</p><span class="slide-number">05 / 07</span></div>
+      <h2>Six modules. Six questions.<br>A progressively sharper read.</h2>
+      <p class="lede">Each prompt moved the work from company context toward a human-scale product response. Open any card to see the exact wording from the prompt library.</p>
+      <div class="module-grid">
+        <article class="module-card"><div class="module-head"><span class="module-id">01 · Origin Story</span><span class="module-name">Find the gap</span></div><h3>The alert funnel is missing</h3><p class="module-finding">The data records offers sent and taken, not whether the phone received or displayed them. “No answer” cannot identify the failure point.</p><a class="module-link" href="CLAUDE.md">Working context ↗</a><details class="prompt"><summary>Exact prompt</summary><blockquote>Do we have data for how many respondres are actually respondind to the alerts and then acting on them?</blockquote></details></article>
+        <article class="module-card"><div class="module-head"><span class="module-id">02 · Super Hearing</span><span class="module-name">Compare voices</span></div><h3>Different samples, both real</h3><p class="module-finding">All four interviews were handlers; ten tickets came from responders. The source split explains why the loudest needs differed.</p><a class="module-link" href="00-rook/feedback/interview-themes.md">Interview themes ↗</a><details class="prompt"><summary>Exact prompt</summary><blockquote>You've now read both folders. Where do they disagree? What's loud in the interviews but rare in the tickets, and what's all over the tickets that nobody brought up in the interviews?</blockquote></details></article>
+        <article class="module-card"><div class="module-head"><span class="module-id">03 · Rewind</span><span class="module-name">Read the rows</span></div><h3>The average hid a split</h3><p class="module-finding">Six of sixteen responders averaged fewer offers and takes; ten averaged more. Mite's offers fell from 11.2 to 2.3 per week.</p><a class="module-link" href="00-rook/data/callout-history-analysis.xlsx">Analysis workbook ↗</a><details class="prompt"><summary>Exact prompt</summary><blockquote>Based on the data 6 respobders out of 16 received less pings and responded to less pings after the Aug 12 release and the rest got more pings and responded to more. Can you explain why this would happen based on the information you already have</blockquote></details></article>
+        <article class="module-card"><div class="module-head"><span class="module-id">04 · X-Ray Vision</span><span class="module-name">Trace the rule</span></div><h3>Quiet does not reset the score</h3><p class="module-finding">Declines and timeouts both lower acceptance history; no time-based recovery exists. A quiet responder has no automatic route back.</p><a class="module-link" href="00-rook/code/dispatch-routing/history.py">Score logic ↗</a><details class="prompt"><summary>Exact prompt</summary><blockquote>omebody has been quiet for a month. Walk me through, step by step, exactly what would have to happen for them to start getting work again.</blockquote></details></article>
+        <article class="module-card"><div class="module-head"><span class="module-id">05 · Super Speed</span><span class="module-name">Make it tangible</span></div><h3>From theory to a screen</h3><p class="module-finding">The click-through puts the change where Kip and Meteor Mite would see it: handler status plus a separate, answerable check-in.</p><a class="module-link" href="05-super-speed/prototype-reentry.html">Open prototype ↗</a><details class="prompt"><summary>Exact prompt</summary><blockquote>Take the brief you just wrote and build me a working prototype, an actual screen I can click through, not a description of one. Build it as a single file I can just open in my browser. Show me where this would actually happen, and make at least one thing on it respond when I click it</blockquote></details></article>
+        <article class="module-card"><div class="module-head"><span class="module-id">06 · Sidekicks</span><span class="module-name">Make it repeatable</span></div><h3>Capture decisions and owners</h3><p class="module-finding">`meeting-recap` records explicit decisions and follow-ups with stated owners; `review-checklist` checks ownership, success, scope, and problem framing.</p><a class="module-link" href=".claude/skills/meeting-recap/SKILL.md">Meeting-recap skill ↗</a><details class="prompt"><summary>Exact prompt · meeting-recap</summary><blockquote>When I review meeting notes afterwards, Heres is what I actually pull out: the decisions that got made, and who owns each follow-up. Turn that into a skill called meeting-recap, so I can point it at any notes and get the same read everytime.</blockquote></details><details class="prompt dual-prompt"><summary>Exact prompt · review-checklist</summary><blockquote>Make a skill called review-checklist. When I point it at a brief, it ckechs that the brief: names who owns it, says how we will know it worked, keeps the same scope start to finish, and explains the problem before the fix.</blockquote></details></article>
+      </div>
+      <p class="prompt-disclaimer">Prompts are reproduced from the six `prompts.md` files. Spelling and punctuation are preserved.</p>
+    </section>
+
+    <section class="slide" aria-label="Re-entry prototype">
+      <div class="slide-top"><p class="kicker">05 · The product response</p><span class="slide-number">06 / 07</span></div>
+      <h2>Ask outside the queue.<br>Give the responder a way back.</h2>
+      <p class="lede">If repeated regional callouts happen while Meteor Mite is marked available but no offer reaches her, Dispatch creates a separate check-in. No callout is needed to start the conversation.</p>
+      <div class="fix-layout">
+        <section class="handler-view" aria-label="Kip's handler view">
+          <span class="mini-eyebrow">Kip's coverage · North region</span>
+          <h3>Responder check-in</h3>
+          <span class="muted-invert">A status with a reason, not a hidden score.</span>
+          <div class="mite-card">
+            <div class="mite-top"><div><div class="mite-name">Meteor Mite</div><div class="mite-handler">Handler: Kip · Marked available</div></div><span class="state-chip" id="prototypeStatus">Check-in needed</span></div>
+            <div class="mite-reason"><div><small>Regional callouts</small><strong>5 while available</strong></div><div><small>Offers sent</small><strong>0 to Meteor Mite</strong></div></div>
+          </div>
+          <p class="handler-explainer" id="prototypeHandlerNote">No reply is not recorded as a decline. Kip can follow up if the check-in stays unseen.</p>
+        </section>
+        <section class="phone-view" aria-label="Meteor Mite's check-in">
+          <div class="phone-view-head"><strong>Meteor Mite · Dispatch app</strong><span>This is not a callout</span></div>
+          <div class="phone-body"><span class="mini-eyebrow">Availability check</span><h3 class="prompt-title">A quick check-in</h3><p class="prompt-copy">You're marked available, but haven't received a callout offer recently. Are you still available, taking a break, or having trouble with alerts?</p>
+            <div class="choices" role="group" aria-label="Meteor Mite's response">
+              <button class="choice" type="button" data-prototype-choice="available" aria-pressed="false">I'm available and reachable</button>
+              <button class="choice" type="button" data-prototype-choice="break" aria-pressed="false">I'm taking a break</button>
+              <button class="choice" type="button" data-prototype-choice="alerts" aria-pressed="false">I'm having alert trouble</button>
+            </div>
+            <div class="phone-response" id="prototypeResponse" aria-live="polite"><strong>Pending</strong><span>Her answer will update Kip's view. Confirming returns her to neutral ranking, not the front of the line.</span></div>
+          </div>
+        </section>
+      </div>
+      <div class="prototype-caption"><span>Prototype behavior is simulated in this report. No alerts or callouts are sent.</span><a href="05-super-speed/prototype-reentry.html">Open the full prototype ↗</a></div>
+      <div class="source-row"><span>Design source:</span><a href="05-super-speed/brief.md">quiet-responder brief</a><a href="05-super-speed/prototype-reentry.html">click-through prototype</a></div>
+    </section>
+
+    <section class="slide" aria-label="Skills and next safeguards">
+      <div class="slide-top"><p class="kicker">06 · Keep the learning</p><span class="slide-number">07 / 07</span></div>
+      <h2>Make decisions visible.<br>Make the brief testable.</h2>
+      <p class="lede">The product breaks the quiet loop for responders. The skills help the team avoid recreating an unowned, unmeasured fix in the next cycle.</p>
+      <div class="guardrails">
+        <article class="guardrail"><span class="mini-eyebrow">Before work starts</span><h3>review-checklist</h3><p>Reviews only the brief's core decision quality. It asks whether someone owns the work, success can be measured, scope stays consistent, and the problem comes before the proposed fix.</p><ul><li>Catch ownerless work before it enters delivery.</li><li>Require an observable outcome, not just a list of hopes.</li><li>Surface scope drift while the change is still a proposal.</li></ul></article>
+        <article class="guardrail recap"><span class="mini-eyebrow">After the meeting</span><h3>meeting-recap</h3><p>Turns notes into a concise record of what was actually decided and what someone agreed to do.</p><ul><li>Separates agreement from options and discussion.</li><li>Records the named owner and due date when notes state them.</li><li>Marks missing details instead of assigning them by guess.</li></ul></article>
+      </div>
+      <div class="brief-check">
+        <div class="brief-check-head"><strong>Applied to this re-entry brief</strong><span>What the checklist still asks us to close</span></div>
+        <div class="check-grid">
+          <div class="check"><span class="check-label">Owner</span><span class="check-result warn">Not stated</span><p>Teams are mentioned; no accountable person is named.</p></div>
+          <div class="check"><span class="check-label">Success</span><span class="check-result warn">Needs work</span><p>Metrics are listed; no target or review window is set.</p></div>
+          <div class="check"><span class="check-label">Scope</span><span class="check-result pass">Pass</span><p>Bounded to the quiet-responder check-in.</p></div>
+          <div class="check"><span class="check-label">Problem first</span><span class="check-result pass">Pass</span><p>The no-offer loop is explained before the proposal.</p></div>
+        </div>
+      </div>
+      <p class="scheduler-note">These are on-demand skills; a recurring Monday review schedule is not configured. The prior scheduled-run output is a past report, not proof of automation.</p>
+      <div class="source-row"><span>Sources:</span><a href=".claude/skills/review-checklist/SKILL.md">review-checklist</a><a href=".claude/skills/meeting-recap/SKILL.md">meeting-recap</a><a href="05-super-speed/brief.md">brief under review</a></div>
+    </section>
+  </main>
+
+  <footer class="controls" aria-label="Presentation controls">
+    <button class="control-button" id="previous" type="button" disabled>← Previous</button>
+    <div class="progress-wrap"><div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div><span class="progress-label" id="slideLabel" aria-live="polite">01 / 07</span></div>
+    <button class="control-button" id="next" type="button">Next →</button>
+    <button class="control-button print-button" id="print" type="button" aria-label="Print or save as PDF">Print / PDF</button>
+  </footer>
+
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    const navButtons = [...document.querySelectorAll('.nav button[data-go]')];
+    const previous = document.getElementById('previous');
+    const next = document.getElementById('next');
+    const slideLabel = document.getElementById('slideLabel');
+    const progressFill = document.getElementById('progressFill');
+    let current = 0;
+
+    function showSlide(index) {
+      current = Math.max(0, Math.min(slides.length - 1, index));
+      slides.forEach((slide, position) => {
+        slide.classList.toggle('active', position === current);
+        slide.setAttribute('aria-hidden', position === current ? 'false' : 'true');
+      });
+      navButtons.forEach((button, position) => button.setAttribute('aria-current', position === current ? 'true' : 'false'));
+      previous.disabled = current === 0;
+      next.disabled = current === slides.length - 1;
+      slideLabel.textContent = `${String(current + 1).padStart(2, '0')} / ${String(slides.length).padStart(2, '0')}`;
+      progressFill.style.width = `${((current + 1) / slides.length) * 100}%`;
+      window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    previous.addEventListener('click', () => showSlide(current - 1));
+    next.addEventListener('click', () => showSlide(current + 1));
+    navButtons.forEach(button => button.addEventListener('click', () => showSlide(Number(button.dataset.go))));
+    document.getElementById('print').addEventListener('click', () => window.print());
+    window.addEventListener('keydown', event => {
+      if (event.altKey || event.ctrlKey || event.metaKey) return;
+      if (event.key === 'ArrowRight' || event.key === 'PageDown') showSlide(current + 1);
+      if (event.key === 'ArrowLeft' || event.key === 'PageUp') showSlide(current - 1);
+    });
+
+    const prototypeStatus = document.getElementById('prototypeStatus');
+    const prototypeHandlerNote = document.getElementById('prototypeHandlerNote');
+    const prototypeResponse = document.getElementById('prototypeResponse');
+    const choices = [...document.querySelectorAll('[data-prototype-choice]')];
+    const prototypeStates = {
+      available: {status: 'Available confirmed', note: 'Meteor Mite confirmed availability. She returns to normal ranking, not the front of the list.', response: 'Availability confirmed', detail: 'She can be considered normally for future callouts. This is not an immediate offer.'},
+      break: {status: 'Taking a break', note: 'Meteor Mite chose a break. New offers pause without another score penalty.', response: 'Break saved', detail: 'Her availability is paused until she chooses to return.'},
+      alerts: {status: 'Alert help needed', note: 'Meteor Mite reported alert trouble. Silence is not treated as a decline.', response: 'Help needed', detail: 'Offers stay paused while alert delivery is checked; no score penalty is added.'}
+    };
+    choices.forEach(button => button.addEventListener('click', () => {
+      const state = prototypeStates[button.dataset.prototypeChoice];
+      prototypeStatus.textContent = state.status;
+      prototypeHandlerNote.textContent = state.note;
+      prototypeResponse.innerHTML = `<strong>${state.response}</strong><span>${state.detail}</span>`;
+      choices.forEach(choice => choice.setAttribute('aria-pressed', choice === button ? 'true' : 'false'));
+    }));
+  </script>
+</body>
+</html>
