@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quiet Responder Recovery Prototype</title>
+    <style>
+      :root {
+        --bg: #f4f6fb;
+        --panel: #ffffff;
+        --ink: #182333;
+        --muted: #60708a;
+        --primary: #1d5df2;
+        --primary-soft: #eaf1ff;
+        --warning: #f0a62d;
+        --warning-soft: #fff3db;
+        --danger: #d13d3d;
+        --danger-soft: #ffe4e4;
+        --success: #1d8f5b;
+        --success-soft: #e6f9ef;
+        --line: #dde4f0;
+        --shadow: 0 12px 30px rgba(22, 32, 55, 0.12);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: linear-gradient(180deg, #edf2ff 0%, var(--bg) 160px);
+        color: var(--ink);
+      }
+
+      .page {
+        max-width: 1160px;
+        margin: 0 auto;
+        padding: 32px 20px 48px;
+      }
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+
+      .eyebrow {
+        font-size: 12px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--primary);
+        font-weight: 700;
+      }
+
+      h1 {
+        margin: 8px 0 0;
+        font-size: clamp(26px, 4vw, 40px);
+        line-height: 1.1;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        background: var(--primary-soft);
+        color: var(--primary);
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: 1.05fr 1.45fr;
+        gap: 24px;
+        margin-top: 22px;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--line);
+        background: #fbfcff;
+      }
+
+      .panel-title {
+        font-weight: 800;
+        font-size: 15px;
+      }
+
+      .small-tag {
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        background: var(--warning-soft);
+        color: #9a5f00;
+      }
+
+      .phone-shell {
+        width: 100%;
+        background: linear-gradient(180deg, #fdfdff 0%, #eef4ff 100%);
+        padding: 22px 20px 18px;
+      }
+
+      .phone {
+        max-width: 360px;
+        margin: 0 auto;
+        background: #fff;
+        border: 1px solid #dfe7fb;
+        border-radius: 30px;
+        padding: 18px 16px 14px;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.6);
+      }
+
+      .status-bar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--muted);
+        margin-bottom: 18px;
+      }
+
+      .avatar-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+
+      .avatar {
+        width: 42px;
+        height: 42px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #1a5ef2, #5a8cff);
+        color: white;
+        font-weight: 800;
+      }
+
+      .user-name {
+        font-weight: 800;
+      }
+
+      .subtext {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .alert-box {
+        background: linear-gradient(180deg, #fffaf0 0%, #fff7e6 100%);
+        border: 1px solid #f9d899;
+        border-radius: 16px;
+        padding: 16px 14px;
+        margin-bottom: 14px;
+      }
+
+      .alert-box h3 {
+        margin: 0 0 8px;
+        font-size: 18px;
+        line-height: 1.2;
+      }
+
+      .alert-box p {
+        margin: 0 0 14px;
+        font-size: 13px;
+        line-height: 1.5;
+        color: #5f4a1d;
+      }
+
+      .button-row {
+        display: grid;
+        gap: 10px;
+      }
+
+      button {
+        border: none;
+        border-radius: 12px;
+        padding: 12px 14px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.12s ease, opacity 0.12s ease;
+      }
+
+      button:hover { transform: translateY(-1px); }
+      button:active { transform: translateY(0); }
+
+      .primary-btn {
+        background: var(--primary);
+        color: white;
+      }
+
+      .secondary-btn {
+        background: #edf3ff;
+        color: var(--ink);
+      }
+
+      .warning-btn {
+        background: #fff0d6;
+        color: #8a5a00;
+      }
+
+      .summary {
+        margin-top: 16px;
+        background: #f6f8fd;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px 12px 10px;
+      }
+
+      .summary-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .summary-row:last-child { margin-bottom: 0; }
+
+      .summary .label {
+        font-weight: 700;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .score-pill {
+        padding: 6px 10px;
+        background: var(--success-soft);
+        color: var(--success);
+        border-radius: 999px;
+        font-weight: 800;
+        font-size: 12px;
+      }
+
+      .score-pill.warning {
+        background: var(--warning-soft);
+        color: #9b6900;
+      }
+
+      .score-pill.danger {
+        background: var(--danger-soft);
+        color: var(--danger);
+      }
+
+      .console-wrap {
+        padding: 18px 18px 14px;
+        background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+      }
+
+      .console-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .responder-card {
+        display: grid;
+        grid-template-columns: 1.2fr 1.1fr 0.9fr;
+        gap: 10px;
+        align-items: center;
+        border: 1px solid var(--line);
+        background: white;
+        border-radius: 14px;
+        padding: 12px 14px;
+      }
+
+      .person {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .mini-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        background: #dfe9ff;
+        color: var(--primary);
+        font-weight: 800;
+        font-size: 12px;
+      }
+
+      .person-name {
+        font-weight: 700;
+      }
+
+      .role {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        width: fit-content;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .status-active { background: var(--success-soft); color: var(--success); }
+      .status-recovery { background: var(--warning-soft); color: #8a5a00; }
+      .status-paused { background: var(--danger-soft); color: var(--danger); }
+
+      .log {
+        margin-top: 18px;
+        background: #f8faff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 14px;
+      }
+
+      .log h4 {
+        margin: 0 0 10px;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .log-entry {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 0;
+        border-top: 1px solid var(--line);
+        font-size: 13px;
+      }
+
+      .log-entry:first-child {
+        border-top: none;
+        padding-top: 0;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--warning);
+      }
+
+      .meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      @media (max-width: 820px) {
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .responder-card {
+          grid-template-columns: 1fr;
+          align-items: start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="header">
+        <div>
+          <div class="eyebrow">Dispatch • product prototype</div>
+          <h1>Quiet Responder Recovery</h1>
+        </div>
+        <div class="chip">Where this would happen</div>
+      </div>
+
+      <div class="workspace">
+        <section class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Responder mobile app</div>
+            <div class="small-tag">Recovery flow</div>
+          </div>
+
+          <div class="phone-shell">
+            <div class="phone">
+              <div class="status-bar">
+                <span>9:41</span>
+                <span>Rook Dispatch</span>
+              </div>
+
+              <div class="avatar-wrap">
+                <div class="avatar">K</div>
+                <div>
+                  <div class="user-name">Kip</div>
+                  <div class="subtext">Responder profile</div>
+                </div>
+              </div>
+
+              <div class="alert-box" id="alertBox">
+                <h3>We noticed you haven’t been answering recent callouts.</h3>
+                <p>Confirm your availability so we can send the right work to the right responder.</p>
+                <div class="button-row">
+                  <button class="primary-btn" data-action="available">I’m available now</button>
+                  <button class="warning-btn" data-action="temporary">I’m temporarily unavailable</button>
+                  <button class="secondary-btn" data-action="fewer">I want fewer pings</button>
+                </div>
+              </div>
+
+              <div class="summary">
+                <div class="summary-row">
+                  <span class="label">Current status</span>
+                  <span class="score-pill warning" id="statusPill">Recovery mode</span>
+                </div>
+                <div class="summary-row">
+                  <span class="label">Recent acceptance</span>
+                  <span class="score-pill" id="scorePill">0.38</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div class="panel-title">Handler console</div>
+            <div class="small-tag">Live routing view</div>
+          </div>
+
+          <div class="console-wrap">
+            <div class="console-grid">
+              <div class="responder-card">
+                <div class="person">
+                  <div class="mini-avatar">K</div>
+                  <div>
+                    <div class="person-name">Kip</div>
+                    <div class="role">Structural entry • 3 m away</div>
+                  </div>
+                </div>
+                <div>
+                  <span class="status-badge status-recovery" id="consoleStatus">Recovery</span>
+                </div>
+                <div style="text-align:right; font-weight:800; color:var(--muted);" id="consoleScore">0.38</div>
+              </div>
+
+              <div class="responder-card">
+                <div class="person">
+                  <div class="mini-avatar">A</div>
+                  <div>
+                    <div class="person-name">Ari</div>
+                    <div class="role">Hazmat • 8 m away</div>
+                  </div>
+                </div>
+                <div>
+                  <span class="status-badge status-active">Available</span>
+                </div>
+                <div style="text-align:right; font-weight:800; color:var(--muted);">0.74</div>
+              </div>
+
+              <div class="responder-card">
+                <div class="person">
+                  <div class="mini-avatar">N</div>
+                  <div>
+                    <div class="person-name">Nia</div>
+                    <div class="role">Cold weather • 12 m away</div>
+                  </div>
+                </div>
+                <div>
+                  <span class="status-badge status-active">Available</span>
+                </div>
+                <div style="text-align:right; font-weight:800; color:var(--muted);">0.69</div>
+              </div>
+            </div>
+
+            <div class="log">
+              <h4>Routing signal</h4>
+              <div class="log-entry">
+                <div class="meta"><span class="dot"></span><span>Quiet responder detected</span></div>
+                <strong>Now</strong>
+              </div>
+              <div class="log-entry">
+                <div class="meta"><span class="dot"></span><span>Availability check prompted</span></div>
+                <strong>2 min ago</strong>
+              </div>
+              <div class="log-entry">
+                <div class="meta"><span class="dot"></span><span>Routing temporarily reduced</span></div>
+                <strong>Pending</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      const statusPill = document.getElementById('statusPill');
+      const scorePill = document.getElementById('scorePill');
+      const consoleStatus = document.getElementById('consoleStatus');
+      const consoleScore = document.getElementById('consoleScore');
+      const alertBox = document.getElementById('alertBox');
+
+      function setState(mode) {
+        const states = {
+          available: {
+            pill: 'Available again',
+            score: '0.72',
+            status: 'Available',
+            consoleClass: 'status-active',
+            toast: 'Availability confirmed. Kip is back in the normal callout queue.'
+          },
+          temporary: {
+            pill: 'Paused',
+            score: '0.21',
+            status: 'Paused',
+            consoleClass: 'status-paused',
+            toast: 'Temporary availability pause applied. Kip will not receive new callouts until reactivated.'
+          },
+          fewer: {
+            pill: 'Lower volume',
+            score: '0.46',
+            status: 'Recovery',
+            consoleClass: 'status-recovery',
+            toast: 'Routing volume reduced. Kip will receive fewer pings while they re-engage.'
+          }
+        };
+
+        const state = states[mode];
+        statusPill.textContent = state.pill;
+        statusPill.className = 'score-pill';
+        if (mode === 'temporary') {
+          statusPill.classList.add('danger');
+        } else if (mode === 'fewer') {
+          statusPill.classList.add('warning');
+        }
+
+        scorePill.textContent = state.score;
+        consoleStatus.textContent = state.status;
+        consoleStatus.className = 'status-badge ' + state.consoleClass;
+        consoleScore.textContent = state.score;
+
+        alertBox.innerHTML = `
+          <h3>Availability update saved.</h3>
+          <p>${state.toast}</p>
+          <div class="button-row">
+            <button class="primary-btn" data-action="available">I’m available now</button>
+            <button class="warning-btn" data-action="temporary">I’m temporarily unavailable</button>
+            <button class="secondary-btn" data-action="fewer">I want fewer pings</button>
+          </div>
+        `;
+
+        alertBox.querySelectorAll('button').forEach(button => {
+          button.addEventListener('click', () => setState(button.dataset.action));
+        });
+      }
+
+      document.querySelectorAll('[data-action]').forEach(button => {
+        button.addEventListener('click', () => setState(button.dataset.action));
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Message Check-in</title>
+    <style>
+      :root {
+        --bg: #f1f5ff;
+        --surface: #ffffff;
+        --ink: #182536;
+        --muted: #5d7088;
+        --primary: #1f5ef3;
+        --primary-soft: #eaf2ff;
+        --warning: #f3b13d;
+        --warning-soft: #fff1d4;
+        --success: #1a8c60;
+        --success-soft: #ebfaf0;
+        --danger: #d24c5d;
+        --danger-soft: #ffe7ea;
+        --line: #dfe8f8;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(180deg, #edf3ff 0%, #f7f9fc 180px);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--ink);
+      }
+      .app {
+        width: min(100%, 420px);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        box-shadow: 0 18px 38px rgba(16, 32, 60, 0.12);
+        overflow: hidden;
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 18px;
+        background: #f9fbff;
+        border-bottom: 1px solid var(--line);
+      }
+      .topbar h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .badge {
+        background: var(--warning-soft);
+        color: #875d00;
+        border-radius: 999px;
+        padding: 7px 10px;
+        font-size: 11px;
+        font-weight: 800;
+      }
+      .content {
+        padding: 18px;
+      }
+      .bubble {
+        border-radius: 20px;
+        background: linear-gradient(180deg, #fffaf0 0%, #fff0d4 100%);
+        border: 1px solid #efcc79;
+        padding: 16px;
+      }
+      .bubble h2 {
+        margin: 0 0 8px;
+        font-size: 22px;
+      }
+      .bubble p {
+        margin: 0 0 12px;
+        color: #5f4616;
+        line-height: 1.55;
+      }
+      .buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      button {
+        border: none;
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .primary { background: var(--primary); color: white; }
+      .secondary { background: #edf4ff; color: var(--ink); }
+      .warning { background: #fff2d7; color: #8a5d00; }
+      .thread {
+        margin-top: 18px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 12px;
+        background: #f8faff;
+      }
+      .thread-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--line);
+        font-size: 13px;
+      }
+      .thread-row:last-child { border-bottom: none; }
+      .thread-row strong { color: var(--ink); }
+      .muted { color: var(--muted); }
+      .pull { margin-top: 14px; }
+      .pull .label {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 8px;
+      }
+      .reply {
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-weight: 800;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <div class="topbar">
+        <h1>Messages</h1>
+        <span class="badge">Kip</span>
+      </div>
+
+      <div class="content">
+        <div class="bubble" id="bubble">
+          <h2>We noticed you’ve been quiet.</h2>
+          <p>We can do a quick check-in before sending more work. It keeps the flow fair and helps avoid missed pings.</p>
+          <div class="buttons">
+            <button class="primary" data-choice="reply">Reply now</button>
+            <button class="warning" data-choice="later">Later</button>
+            <button class="secondary" data-choice="pause">Pause</button>
+          </div>
+        </div>
+
+        <div class="thread">
+          <div class="thread-row">
+            <span class="muted">Status</span>
+            <strong id="statusText">Recovery</strong>
+          </div>
+          <div class="thread-row">
+            <span class="muted">Recent activity</span>
+            <strong>3 missed callouts</strong>
+          </div>
+        </div>
+
+        <div class="pull">
+          <span class="label">Suggested action</span>
+          <div class="reply" id="replyText">Send a quick check-in before more work is routed.</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const bubble = document.getElementById('bubble');
+      const statusText = document.getElementById('statusText');
+      const replyText = document.getElementById('replyText');
+
+      function setChoice(choice) {
+        const states = {
+          reply: {
+            heading: 'Reply sent',
+            copy: 'You’ve confirmed you’re available and we’ve restored your normal flow.',
+            status: 'Available',
+            action: 'Back in active rotation'
+          },
+          later: {
+            heading: 'We’ll check back later',
+            copy: 'We’ll keep your status quiet for now and remind you again when it matters.',
+            status: 'On hold',
+            action: 'Awaiting your next update'
+          },
+          pause: {
+            heading: 'Routing paused',
+            copy: 'We’ve paused new work until you’re ready to receive callouts again.',
+            status: 'Paused',
+            action: 'No new work until reactivated'
+          }
+        };
+
+        const state = states[choice];
+        bubble.innerHTML = `
+          <h2>${state.heading}</h2>
+          <p>${state.copy}</p>
+          <div class="buttons">
+            <button class="primary" data-choice="reply">Reply now</button>
+            <button class="warning" data-choice="later">Later</button>
+            <button class="secondary" data-choice="pause">Pause</button>
+          </div>
+        `;
+        statusText.textContent = state.status;
+        replyText.textContent = state.action;
+
+        bubble.querySelectorAll('button').forEach(button => {
+          button.addEventListener('click', () => setChoice(button.dataset.choice));
+        });
+      }
+
+      document.querySelectorAll('[data-choice]').forEach(button => {
+        button.addEventListener('click', () => setChoice(button.dataset.choice));
+      });
+    </script>
+  </body>
+</html>

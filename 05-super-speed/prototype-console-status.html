@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Availability Center</title>
+    <style>
+      :root {
+        --bg: #f4f8ff;
+        --surface: #ffffff;
+        --ink: #182635;
+        --muted: #61718a;
+        --primary: #1f5ef3;
+        --primary-soft: #ebf2ff;
+        --success: #1c8d60;
+        --success-soft: #eafaf0;
+        --warning: #f2b240;
+        --warning-soft: #fff2d5;
+        --danger: #d64c5b;
+        --danger-soft: #ffe8ee;
+        --line: #dfe9f8;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(180deg, #edf4ff 0%, #f7f9fc 180px);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: var(--ink);
+      }
+      .screen {
+        width: min(100%, 460px);
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 28px;
+        box-shadow: 0 18px 40px rgba(19, 32, 58, 0.1);
+        overflow: hidden;
+      }
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 18px;
+        background: #f9fbff;
+        border-bottom: 1px solid var(--line);
+      }
+      .header h1 {
+        margin: 0;
+        font-size: 18px;
+      }
+      .chip {
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+        background: var(--primary-soft);
+        color: var(--primary);
+      }
+      .content { padding: 18px; }
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+      .metric {
+        background: #f8faff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px 10px;
+      }
+      .metric .label {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 8px;
+      }
+      .metric strong {
+        font-size: 18px;
+      }
+      .status-card {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 16px;
+        background: linear-gradient(180deg, #fffaf1 0%, #fff5de 100%);
+      }
+      .status-card h2 {
+        margin: 0 0 12px;
+        font-size: 20px;
+      }
+      .toggle-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 12px;
+        background: rgba(255,255,255,0.6);
+        border: 1px solid rgba(240,177,70,0.4);
+        margin-bottom: 12px;
+      }
+      .toggle-row span {
+        font-weight: 700;
+      }
+      .switch {
+        width: 46px;
+        height: 28px;
+        background: #d7dfe9;
+        border-radius: 999px;
+        position: relative;
+        transition: background 0.2s ease;
+      }
+      .switch::before {
+        content: "";
+        position: absolute;
+        top: 4px; left: 4px;
+        width: 20px; height: 20px;
+        border-radius: 50%;
+        background: white;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        transition: transform 0.2s ease;
+      }
+      .switch.on {
+        background: var(--success);
+      }
+      .switch.on::before {
+        transform: translateX(18px);
+      }
+      .actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      button {
+        flex: 1;
+        border: none;
+        border-radius: 10px;
+        padding: 12px 10px;
+        font-weight: 800;
+        cursor: pointer;
+      }
+      .primary { background: var(--primary); color: white; }
+      .secondary { background: #edf4ff; color: var(--ink); }
+      .note {
+        margin-top: 18px;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #f8faff;
+        padding: 12px 14px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="screen">
+      <div class="header">
+        <h1>Availability</h1>
+        <span class="chip">Kip</span>
+      </div>
+
+      <div class="content">
+        <div class="summary">
+          <div class="metric">
+            <span class="label">Accepted</span>
+            <strong>18</strong>
+          </div>
+          <div class="metric">
+            <span class="label">Missed</span>
+            <strong>4</strong>
+          </div>
+          <div class="metric">
+            <span class="label">Rate</span>
+            <strong>82%</strong>
+          </div>
+        </div>
+
+        <div class="status-card">
+          <h2>We’ve noticed a quieter pattern.</h2>
+
+          <div class="toggle-row">
+            <span>Available for callouts</span>
+            <div class="switch on" id="toggle"></div>
+          </div>
+
+          <div class="toggle-row">
+            <span>Reduced pings</span>
+            <div class="switch" id="lowNoise"></div>
+          </div>
+
+          <div class="actions">
+            <button class="primary" id="confirmBtn">Save</button>
+            <button class="secondary" id="laterBtn">Later</button>
+          </div>
+        </div>
+
+        <div class="note" id="note">
+          The app explains the state and gives you an easy way to reset your availability without needing to guess what the system is doing.
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const toggle = document.getElementById('toggle');
+      const lowNoise = document.getElementById('lowNoise');
+      const note = document.getElementById('note');
+
+      toggle.addEventListener('click', () => {
+        toggle.classList.toggle('on');
+      });
+
+      lowNoise.addEventListener('click', () => {
+        lowNoise.classList.toggle('on');
+      });
+
+      document.getElementById('confirmBtn').addEventListener('click', () => {
+        note.textContent = 'Saved. You’re back in the normal callout flow.';
+        toggle.classList.add('on');
+      });
+
+      document.getElementById('laterBtn').addEventListener('click', () => {
+        note.textContent = 'Saved for later. We’ll keep the current availability settings until you update them.';
+      });
+    </script>
+  </body>
+</html>
